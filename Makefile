@@ -1,8 +1,9 @@
 all:
-	g++ -o main main.cpp -std=c++17
+	mkdir ./out
+	g++ -o ./out/main ./src/main.cpp -std=c++17
 
 run:
-	./main
+	./out/main
 
 clean:
-	rm -f main
+	rm -rf ./out/
