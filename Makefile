@@ -1,9 +1,9 @@
 all:
 	mkdir ./out
-	g++ -o ./out/main ./src/main.cpp -std=c++17
+	g++ -o ./out/server ./src/server.cpp -std=c++17
 
 run:
-	./out/main
+	./out/server
 
 clean:
 	rm -rf ./out/
