@@ -1,6 +1,6 @@
 all:
 	mkdir ./out
-	g++ -g -o ./out/server ./src/server.cpp ./src/logger.cpp ./src/response.cpp -std=c++17 -Wall -Wextra -pedantic
+	g++ -g -o ./out/server ./src/server.cpp ./src/logger.cpp ./src/response.cpp -std=c++17 -Wall -Wextra -pedantic -lstdc++fs
 
 run:
 	./out/server

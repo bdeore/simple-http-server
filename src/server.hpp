@@ -8,7 +8,9 @@
 #include <sys/types.h>
 #include <arpa/inet.h>
 #include <cstring>
-#include "response.h"
+#include <map>
+
+#include "response.hpp"
 
 class Server {
  public:
@@ -20,6 +22,7 @@ class Server {
   ~Server();
   void initialize_server();
   void run_server();
+  static std::string check_mime_type(std::string);
   char *generate_headers();
 };
 

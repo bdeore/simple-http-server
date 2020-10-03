@@ -1,4 +1,4 @@
-#include "logger.h"
+#include "logger.hpp"
 
 Logger::Logger() {
   //std::cout << "inside Logger constructor" << std::endl;
