@@ -6,6 +6,8 @@
 #include <iostream>
 #include <filesystem>
 #include <chrono>
+#include <vector>
+
 #include "server.hpp"
 
 class response {
@@ -21,7 +23,7 @@ class response {
   static std::string get_date();
   static std::string get_server_name();
   static std::string get_last_modified(std::string file_name);
-  static std::string get_content_type();
+  static std::string get_content_type(const std::string& file_name);
   static std::string get_content_length(std::string file_name);
 
  public:

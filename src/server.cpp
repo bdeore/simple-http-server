@@ -5,7 +5,7 @@
 std::map<std::string, std::string> mime_types;
 
 int main() {
-  Server cs557;
+  server cs557;
   Logger logger;
 
   cs557.initialize_server();
@@ -14,7 +14,7 @@ int main() {
   return 0;
 }
 
-Server::Server() {
+server::server() {
   socket_fd = 0;
   new_socket = 0;
 
@@ -23,7 +23,7 @@ Server::Server() {
   server_address.sin_port = 0;
 }
 
-void Server::initialize_server() {
+void server::initialize_server() {
   socket_fd = socket(AF_INET, SOCK_STREAM, 0);
   int option = 1;
 
@@ -45,11 +45,9 @@ void Server::initialize_server() {
             << " ------------------------------------------------\n" << std::endl;
 }
 
-void Server::run_server() {
+void server::run_server() {
   char buffer[1024] = {0};
 
-  std::string file_name = "syllabus.pdf";
-  response::header_response(file_name);
   while (1) {
     if (listen(socket_fd, 5) < 0) {
       exit(EXIT_FAILURE);
@@ -60,25 +58,33 @@ void Server::run_server() {
       exit(EXIT_FAILURE);
     }
 
-    printf("connection from host:[ %s ] + port:[ %d ]\n", inet_ntoa(client_address.sin_addr),
+    printf("connection from host:[ %s ] + port:[ %d ]\n\n", inet_ntoa(client_address.sin_addr),
            ntohs(client_address.sin_port));
 
-    char *test = "HTTP/1.1 200 OK";
-    //send(new_socket, test, 1200, 0);
     read(new_socket, buffer, 1024);
+    char *test = "HTTP/1.1 200 OK";
+
+    response::header_response(request_parser(buffer));
+
     send(new_socket, test, strlen(test), 0);
     close(new_socket);
   }
 }
 
-char *Server::generate_headers() {
-  //std::vector<char> response{"HTTP/1.0 200 OK\n\n", "there"};
-  //return response[0] + response[1];
-  char *response = "HTTP/1.0 \\r\\n200 OK\\r\\n\\r\\n";
-  return response;
+std::string server::request_parser(char *buffer) {
+  char *current_token, *string_left = buffer;
+  std::vector<std::string> tokens;
+  current_token = strtok_r(string_left, " ", &string_left);
+
+  while (current_token) {
+    tokens.emplace_back(current_token);
+    current_token = strtok_r(string_left, " ", &string_left);
+  }
+  tokens[1] = tokens[1].substr(1);
+  return tokens[1];
 }
 
-std::string Server::check_mime_type(std::string extension) {
+std::string server::check_mime_type(std::string extension) {
   std::map<std::string, std::string>::iterator it;
 
   mime_types.insert(std::pair<std::string, std::string>("aac", "audio/aac"));
@@ -158,7 +164,7 @@ std::string Server::check_mime_type(std::string extension) {
   } else return "application/octet-stream";
 }
 
-Server::~Server() {
+server::~server() {
   close(new_socket);
   close(socket_fd);
   std::cout << "shutting down server..." << std::endl;

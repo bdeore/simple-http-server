@@ -12,18 +12,18 @@
 
 #include "response.hpp"
 
-class Server {
+class server {
  public:
   int socket_fd, new_socket;
   socklen_t c_len, s_len;
   struct sockaddr_in server_address, client_address;
 
-  Server();
-  ~Server();
+  server();
+  ~server();
   void initialize_server();
   void run_server();
   static std::string check_mime_type(std::string);
-  char *generate_headers();
+  static std::string request_parser(char buffer[]);
 };
 
 #endif

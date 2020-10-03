@@ -7,7 +7,7 @@ char *response::header_response(std::string file_name) {
   response.server_name = get_server_name();
   response.last_modified = get_last_modified(file_name);
   response.content_length = get_content_length(file_name);
-  response.content_type = get_content_type();
+  response.content_type = get_content_type(file_name);
   response.date = get_date();
 
   std::cout << response.status << std::endl;
@@ -54,6 +54,17 @@ std::string response::get_content_length(std::string file_name) {
   return std::to_string(std::filesystem::file_size(path));
 }
 
-std::string response::get_content_type() {
-  return Server::check_mime_type("pdf");
+std::string response::get_content_type(const std::string &file_name) {
+  char file_arr[file_name.size()];
+  std::string extension;
+  std::strcpy(file_arr, file_name.c_str());
+  char *current_token, *string_left = file_arr;
+  current_token = strtok_r(string_left, ".", &string_left);
+
+  while (current_token) {
+    extension = std::string(current_token);
+    current_token = strtok_r(string_left, ".", &string_left);
+  }
+
+  return server::check_mime_type(extension);
 }
