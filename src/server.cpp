@@ -1,17 +1,32 @@
 #include "server.hpp"
 #include "response.hpp"
 #include "logger.hpp"
-#include <vector>
+
 std::map<std::string, std::string> mime_types;
+void run_server(int);
 logger logger;
+server cs557;
 
 int main() {
-  server cs557;
 
-  cs557.initialize_server();
-  cs557.run_server();
+  int socket_fd = cs557.initialize_server();
+  unsigned int threads_supported = std::thread::hardware_concurrency();
+  std::vector<std::thread> thread_pool;
 
-  return 0;
+  while (1) {
+    if (listen(socket_fd, 5) < 0) {
+      exit(EXIT_FAILURE);
+    }
+
+    for (unsigned int i = 0; i < threads_supported; i++) {
+      thread_pool.emplace_back(std::thread(run_server, socket_fd));
+    }
+
+    for (size_t i = 0; i < thread_pool.size(); i++) {
+      thread_pool.at(i).join();
+    }
+
+  }
 }
 
 server::server() {
@@ -23,7 +38,7 @@ server::server() {
   server_address.sin_port = 0;
 }
 
-void server::initialize_server() {
+int server::initialize_server() {
   socket_fd = socket(AF_INET, SOCK_STREAM, 0);
   int option = 1;
   create_map();
@@ -44,31 +59,30 @@ void server::initialize_server() {
             << "   CS557_Server => listening on port [ "
             << ntohs(server_address.sin_port) << " ]\n"
             << " ------------------------------------------------\n" << std::endl;
+
+  return socket_fd;
 }
 
-void server::run_server() {
+void run_server(int socket_fd) {
   char buffer[1024] = {0};
+  socklen_t c_len = cs557.c_len;
+  int new_socket;
 
-  while (1) {
-    if (listen(socket_fd, 5) < 0) {
-      exit(EXIT_FAILURE);
-    }
-
-    c_len = sizeof(client_address);
-    if ((new_socket = accept(socket_fd, (struct sockaddr *) &client_address, (socklen_t *) &c_len)) < 0) {
-      exit(EXIT_FAILURE);
-    }
-
-    read(new_socket, buffer, 1024);
-
-    std::string file_name = request_parser(buffer);
-    std::string headers = response::header_response(file_name);
-
-    send(new_socket, headers.c_str(), strlen(headers.c_str()), 0);
-    send_data(file_name, new_socket);
-
-    close(new_socket);
+  c_len = sizeof(cs557.client_address);
+  if ((new_socket = accept(socket_fd, (struct sockaddr *) &cs557.client_address, (socklen_t *) &c_len)) < 0) {
+    exit(EXIT_FAILURE);
   }
+
+  read(new_socket, buffer, 1024);
+
+  std::string file_name = cs557.request_parser(buffer);
+  std::string headers = response::header_response(file_name);
+
+  send(new_socket, headers.c_str(), strlen(headers.c_str()), 0);
+  cs557.send_data(file_name, new_socket);
+
+  close(new_socket);
+
 }
 
 std::string server::request_parser(char *buffer) {
@@ -102,7 +116,7 @@ void server::send_data(std::string file_name, int socket) {
   std::ifstream file;
   file.open((file_name.c_str()));
 
-  if (file.is_open()) {
+  if (file.is_open() && file_name != "www/") {
     file.read(data, file_size);
     send(socket, data, file_size, 0);
     logger.write(file_name.substr(4), inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port));

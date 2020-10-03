@@ -9,6 +9,8 @@
 #include <arpa/inet.h>
 #include <cstring>
 #include <map>
+#include <thread>
+#include <vector>
 
 #include "response.hpp"
 
@@ -20,12 +22,12 @@ class server {
 
   server();
   ~server();
-  void initialize_server();
-  void run_server();
+  int initialize_server();
+  //void run_server(int);
   void send_data(std::string file_name, int socket);
   static std::string check_mime_type(std::string);
-  static std::string request_parser(char buffer[]);
-  static void create_map();
+  std::string request_parser(char buffer[]);
+  void create_map();
 };
 
 #endif

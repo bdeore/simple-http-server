@@ -26,7 +26,7 @@ std::string response::header_response(const std::string &file_name) {
 std::string response::get_status(std::string file_name) {
   file_name = "www/" + file_name;
   std::ifstream exists(file_name.c_str());
-  if (exists.good()) return "200 OK"; else return "404 NOT FOUND";
+  if (exists.good() && file_name != "www/") return "200 OK"; else return "404 NOT FOUND";
 }
 
 std::string response::get_date() {
