@@ -22,8 +22,10 @@ class server {
   ~server();
   void initialize_server();
   void run_server();
+  void send_data(std::string file_name, int socket);
   static std::string check_mime_type(std::string);
   static std::string request_parser(char buffer[]);
+  static void create_map();
 };
 
 #endif

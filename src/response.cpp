@@ -1,21 +1,26 @@
 #include "response.hpp"
 
-char *response::header_response(std::string file_name) {
-  response response;
+std::string response::header_response(const std::string &file_name) {
+  response res;
+  std::string response;
+  res.status = res.get_status(file_name);
 
-  response.status = response.get_status(file_name);
-  response.server_name = get_server_name();
-  response.last_modified = get_last_modified(file_name);
-  response.content_length = get_content_length(file_name);
-  response.content_type = get_content_type(file_name);
-  response.date = get_date();
+  if (res.status == "200 OK") {
+    res.server_name = get_server_name();
+    res.date = get_date();
+    res.last_modified = get_last_modified(file_name);
+    res.content_length = res.get_content_length(file_name);
+    res.content_type = get_content_type(file_name);
 
-  std::cout << response.status << std::endl;
-  std::cout << response.server_name << std::endl;
-  std::cout << response.last_modified << std::endl;
-  std::cout << response.content_length << std::endl;
-  std::cout << response.content_type << std::endl;
-  std::cout << response.date << std::endl;
+    response = "HTTP/1.1 " + res.status + "\n" + "Date: " + res.date + "\n" + "Server: " + res.server_name
+        + "\n" + "Last-Modified: " + res.last_modified + "\n" + "Content-Length: " + res.content_length + "\n" +
+        "Content-Type: " + res.content_type + "\n\n";
+  } else {
+    response = "HTTP/1.1 " + res.status + "\n" + "Date: " + res.date + "\n" + "Server: " + res.server_name
+        + "\n\n";
+  }
+
+  return response;
 }
 
 std::string response::get_status(std::string file_name) {
@@ -26,7 +31,6 @@ std::string response::get_status(std::string file_name) {
 
 std::string response::get_date() {
   char formatted_time[256];
-
   std::time_t date_time = std::time(0);
   strftime(formatted_time, sizeof(formatted_time), "%a, %d %b %Y %H:%M:%S GMT", std::gmtime(&date_time));
 
@@ -49,9 +53,13 @@ std::string response::get_last_modified(std::string file_name) {
 }
 
 std::string response::get_content_length(std::string file_name) {
-  file_name = "www/" + file_name;
-  std::filesystem::path path = std::filesystem::current_path() / file_name;
-  return std::to_string(std::filesystem::file_size(path));
+  if (response::get_status(file_name) == "200 OK") {
+    file_name = "www/" + file_name;
+    std::filesystem::path path = std::filesystem::current_path() / file_name;
+    return std::to_string(std::filesystem::file_size(path));
+  }
+
+  return "0";
 }
 
 std::string response::get_content_type(const std::string &file_name) {

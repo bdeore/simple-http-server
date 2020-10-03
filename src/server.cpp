@@ -3,10 +3,10 @@
 #include "logger.hpp"
 #include <vector>
 std::map<std::string, std::string> mime_types;
+logger logger;
 
 int main() {
   server cs557;
-  Logger logger;
 
   cs557.initialize_server();
   cs557.run_server();
@@ -26,6 +26,7 @@ server::server() {
 void server::initialize_server() {
   socket_fd = socket(AF_INET, SOCK_STREAM, 0);
   int option = 1;
+  create_map();
 
   setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
   setsockopt(socket_fd, SOL_SOCKET, SO_REUSEPORT, &option, sizeof(option));
@@ -58,15 +59,14 @@ void server::run_server() {
       exit(EXIT_FAILURE);
     }
 
-    printf("connection from host:[ %s ] + port:[ %d ]\n\n", inet_ntoa(client_address.sin_addr),
-           ntohs(client_address.sin_port));
-
     read(new_socket, buffer, 1024);
-    char *test = "HTTP/1.1 200 OK";
 
-    response::header_response(request_parser(buffer));
+    std::string file_name = request_parser(buffer);
+    std::string headers = response::header_response(file_name);
 
-    send(new_socket, test, strlen(test), 0);
+    send(new_socket, headers.c_str(), strlen(headers.c_str()), 0);
+    send_data(file_name, new_socket);
+
     close(new_socket);
   }
 }
@@ -86,6 +86,32 @@ std::string server::request_parser(char *buffer) {
 
 std::string server::check_mime_type(std::string extension) {
   std::map<std::string, std::string>::iterator it;
+
+  it = mime_types.find(extension);
+  if (it != mime_types.end()) {
+    return it->second;
+  } else return "application/octet-stream";
+}
+
+void server::send_data(std::string file_name, int socket) {
+  response res;
+  int file_size = std::stoi(res.get_content_length(file_name));
+
+  file_name = "www/" + file_name;
+  char *data = new char[file_size];
+  std::ifstream file;
+  file.open((file_name.c_str()));
+
+  if (file.is_open()) {
+    file.read(data, file_size);
+    send(socket, data, file_size, 0);
+    logger.write(file_name.substr(4), inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port));
+  }
+  file.close();
+  delete[] data;
+}
+
+void server::create_map() {
 
   mime_types.insert(std::pair<std::string, std::string>("aac", "audio/aac"));
   mime_types.insert(std::pair<std::string, std::string>("abw", "application/x-abiword"));
@@ -158,10 +184,6 @@ std::string server::check_mime_type(std::string extension) {
   mime_types.insert(std::pair<std::string, std::string>("zip", "application/zip"));
   mime_types.insert(std::pair<std::string, std::string>("7z", "application/x-7z-compressed"));
 
-  it = mime_types.find(extension);
-  if (it != mime_types.end()) {
-    return it->second;
-  } else return "application/octet-stream";
 }
 
 server::~server() {
