@@ -3,9 +3,12 @@
 
 #include <iostream>
 #include <unistd.h>
+#include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
+#include <cstring>
+#include "response.h"
 
 class Server {
  public:
@@ -17,6 +20,7 @@ class Server {
   ~Server();
   void initialize_server();
   void run_server();
+  char *generate_headers();
 };
 
 #endif

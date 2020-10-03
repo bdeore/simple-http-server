@@ -1,5 +1,7 @@
 #include "server.h"
+#include "response.h"
 #include "logger.h"
+#include <vector>
 
 int main() {
   Server cs557;
@@ -43,6 +45,10 @@ void Server::initialize_server() {
 }
 
 void Server::run_server() {
+  char buffer[1024] = {0};
+
+  std::string file_name = "syllabus.pdf";
+  response::header_response(file_name);
   while (1) {
     if (listen(socket_fd, 5) < 0) {
       exit(EXIT_FAILURE);
@@ -53,12 +59,22 @@ void Server::run_server() {
       exit(EXIT_FAILURE);
     }
 
-    printf("connection from host:[ %s ] on port:[ %d ]\n", inet_ntoa(client_address.sin_addr),
+    printf("connection from host:[ %s ] + port:[ %d ]\n", inet_ntoa(client_address.sin_addr),
            ntohs(client_address.sin_port));
 
-    send(new_socket, "hello there", strlen("hello there"), 0);
+    char *test = "HTTP/1.1 200 OK";
+    //send(new_socket, test, 1200, 0);
+    read(new_socket, buffer, 1024);
+    send(new_socket, test, strlen(test), 0);
     close(new_socket);
   }
+}
+
+char *Server::generate_headers() {
+  //std::vector<char> response{"HTTP/1.0 200 OK\n\n", "there"};
+  //return response[0] + response[1];
+  char *response = "HTTP/1.0 \\r\\n200 OK\\r\\n\\r\\n";
+  return response;
 }
 
 Server::~Server() {
