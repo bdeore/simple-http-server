@@ -19,11 +19,11 @@ int main() {
     }
 
     for (unsigned int i = 0; i < threads_supported; i++) {
-      thread_pool.emplace_back(std::thread(run_server, socket_fd));
+      thread_pool.emplace_back(run_server, socket_fd);
     }
 
     for (size_t i = 0; i < thread_pool.size(); i++) {
-      thread_pool.at(i).join();
+      if (thread_pool.at(i).joinable()) thread_pool.at(i).join();
     }
 
   }
@@ -56,7 +56,7 @@ int server::initialize_server() {
   }
 
   std::cout << "\n ------------------------------------------------\n"
-            << "   CS557_Server => listening on port [ "
+            << "   HTTP_Server => listening on port [ "
             << ntohs(server_address.sin_port) << " ]\n"
             << " ------------------------------------------------\n" << std::endl;
 
@@ -77,6 +77,8 @@ void run_server(int socket_fd) {
 
   std::string file_name = cs557.request_parser(buffer);
   std::string headers = response::header_response(file_name);
+
+  logger.write(file_name, inet_ntoa(cs557.client_address.sin_addr), ntohs(cs557.client_address.sin_port));
 
   send(new_socket, headers.c_str(), strlen(headers.c_str()), 0);
   cs557.send_data(file_name, new_socket);
@@ -119,7 +121,6 @@ void server::send_data(std::string file_name, int socket) {
   if (file.is_open() && file_name != "www/") {
     file.read(data, file_size);
     send(socket, data, file_size, 0);
-    logger.write(file_name.substr(4), inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port));
   }
   file.close();
   delete[] data;
